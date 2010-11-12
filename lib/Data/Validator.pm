@@ -5,7 +5,7 @@ use Mouse::Util::TypeConstraints ();
 use Mouse::Util                  ();
 use Carp                         ();
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 *_isa_tc  = \&Mouse::Util::TypeConstraints::find_or_create_isa_type_constraint;
 *_does_tc = \&Mouse::Util::TypeConstraints::find_or_create_does_type_constraint;
@@ -38,9 +38,9 @@ sub BUILDARGS {
             exists($rule->{$attr}) and $used++;
         }
         if($used < keys %{$rule}) {
-            my @unknowns = grep { not exists $rule_attrs{$_} }
-                keys %{$rule};
-            Carp::croak("Unknown attributes in a validation rule for '$name': "
+            my @unknowns = grep { not exists $rule_attrs{$_} }  keys %{$rule};
+            Carp::croak("Wrong definition for '$name':"
+                . ' Unknown attributes: '
                 . Mouse::Util::quoted_english_list(@unknowns) );
         }
 
@@ -56,8 +56,8 @@ sub BUILDARGS {
         }
         if(defined $rule->{does}) {
             defined($rule->{type})
-                and Carp::croak("Rule error for '$name':"
-                    . " You cannot use 'isa' and 'does' at the same time");
+                and Carp::croak("Wrong definition for '$name':"
+                    . q{ You cannot use 'isa' and 'does' together});
             $rule->{type} = _does_tc(delete $rule->{does});
         }
 
@@ -76,8 +76,9 @@ sub BUILDARGS {
         while(my($this, $others) = each %xor) {
             foreach my $other_name(@{$others}) {
                 my $other_rule = $byname{$other_name}
-                    || Carp::croak("Unknown parameter name '$other_name'"
-                        . " specified as exclusive-or by '$this'");
+                    || Carp::croak("Wrong definition for '$this':"
+                        . " Unknown parameter name '$other_name'"
+                        . " specified as exclusive-or");
 
                 push @{$other_rule->{xor} ||= []}, $this;
             }
@@ -116,7 +117,7 @@ sub validate {
         next if exists $skip{$name};
 
         if(exists $args->{$name}) {
-            $self->_apply_type_constraint($rule, \$args->{$name})
+            $self->apply_type_constraint($rule, \$args->{$name})
                 if exists $rule->{type};
 
             if($rule->{xor}) {
@@ -206,7 +207,7 @@ sub throw_error {
     Carp::croak($message);
 }
 
-sub _apply_type_constraint {
+sub apply_type_constraint {
     my($self, $rule, $value_ref) = @_;
     my $tc = $rule->{type};
     return if $tc->check(${$value_ref});
@@ -223,11 +224,6 @@ sub _apply_type_constraint {
         . $tc->get_message(${$value_ref}) );
 }
 
-sub _unknown {
-    my($self, $knowns, $params) = @_;
-}
-
-
 __PACKAGE__->meta->make_immutable;
 __END__
 
@@ -237,7 +233,7 @@ Data::Validator - Rule based validator on type constraint subsystem
 
 =head1 VERSION
 
-This document describes Data::Validator version 0.01.
+This document describes Data::Validator version 0.02.
 
 =head1 SYNOPSIS
 
@@ -302,15 +298,79 @@ This document describes Data::Validator version 0.01.
 This is yet another validation library, based on C<Smart::Args> but
 less smart.
 
-B<< Any API will change without notice >>.
+This is under development. B<< Any API will change without notice >>.
+
+=head2 Concepts
+
+=over
+
+=item Natural as Perl code
+
+I love C<Smart::Args> because it is really stylish, but it does not seem
+Perl-ish.
+
+Thus, I have designed C<Data::Validator> in more Perl-ish way
+with full of C<Smart::Args> functionality.
+
+=item Basics on Mouse's type constraint system
+
+Moose's type constraint system is awesome, and so is Mouse's. In fact,
+Mouse's type constraints are much faster than Moose's so that you need not
+hesitate to use type validations.
+
+Thus, I have made C<Data::Validator> based on Mouse's type constraint system.
+
+=item Pure Perl
+
+Although I do not hesitate to depend on XS modules, some people think that
+XS modules are hard to install.
+
+Thus, I have written C<Data::Validator> in pure Perl and chosen required modules
+which work in pure Perl.
+
+=item Performance
+
+I think validators should be as fast as possible because they are only
+important for illegal inputs.
+
+This is much faster than C<Params::Validate>, which has an XS backend, though.
+
+=back
 
 =head1 INTERFACE
 
-=head2 C<< Data::Validator->new(@rules) :Validator >>
+=head2 C<< Data::Validator->new( $arg_name => $rule [, ...]) :Validator >>
+
+Creates a validation rule.
+
+Attributes for I<$rule> are as follows:
+
+=over
+
+=item C<< isa => $type : Str|Object >>
+
+=item C<< does => $role : Str|Object >>
+
+=item C<< optional => $value : Bool >>
+
+=item C<< xor => $exclusives : ArrayRef >>
+
+=item C<< documentation => $doc : Str >>
+
+=back
 
 =head2 C<< $validator->with(@roles) :Validator >>
 
+Applies I<@roles> to I<$validator> and returns itself.
+
+See L</EXTENTIONS> for details.
+
 =head2 C<< $validator->validate(@args) :HashRef >>
+
+Validates I<@args> and returns a restricted HASH reference.
+
+Restricted hashes are hashes which do not allow to access non-existing keys,
+so you must check a key C<exists> in the hash before fetching values.
 
 =head1 EXTENTIONS
 

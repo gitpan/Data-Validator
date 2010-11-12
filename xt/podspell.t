@@ -18,6 +18,8 @@ all_pod_files_spelling_ok('lib');
 
 __DATA__
 gfx
+Fuji
+Goro
 gfuji@cpan.org
 Data::Validator
 
@@ -105,6 +107,7 @@ invocants
 extentions
 AllowExtra
 behaviours
+backend
 
 versa # vice versa
 ish   # something-ish
