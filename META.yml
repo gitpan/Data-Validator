@@ -1,5 +1,5 @@
 ---
-abstract: 'Rule based validator on type constraint subsystem'
+abstract: 'Rule based validator on type constraint system'
 author:
   - 'Fuji, Goro (gfx) <gfuji@cpan.org>'
 build_requires:
@@ -28,4 +28,4 @@ requires:
 resources:
   license: http://dev.perl.org/licenses/
   repository: git://github.com/gfx/p5-Data-Validator.git
-version: 0.03
+version: 0.04
