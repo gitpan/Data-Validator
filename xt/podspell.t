@@ -108,6 +108,8 @@ extentions
 AllowExtra
 behaviours
 backend
+NoThrow
+callbacks
 
 versa # vice versa
 ish   # something-ish

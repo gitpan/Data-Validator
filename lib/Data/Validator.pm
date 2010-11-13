@@ -5,7 +5,7 @@ use Mouse::Util::TypeConstraints ();
 use Mouse::Util                  ();
 use Carp                         ();
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 *_isa_tc  = \&Mouse::Util::TypeConstraints::find_or_create_isa_type_constraint;
 *_does_tc = \&Mouse::Util::TypeConstraints::find_or_create_does_type_constraint;
@@ -18,8 +18,12 @@ has rules => (
 
 no Mouse;
 
-my %rule_attrs = map { $_ => undef }
-    qw(isa does default optional xor documentation);
+my %rule_attrs = map { $_ => undef }qw(
+    isa does coerce
+    default optional
+    xor
+    documentation
+);
 
 sub BUILDARGS {
     my($class, @mapping) = @_;
@@ -46,9 +50,10 @@ sub BUILDARGS {
 
         # setup the rule
         if(defined $rule->{xor}) {
-            $xor{$name} = Mouse::Util::TypeConstraints::ArrayRef($rule->{xor})
-                    ?  $rule->{xor}
-                    : [$rule->{xor}];
+            my @xors = Mouse::Util::TypeConstraints::ArrayRef($rule->{xor})
+                    ? @{$rule->{xor}}
+                    :  ($rule->{xor});
+            $xor{$name} = $rule->{xor} = \@xors;
         }
 
         if(defined $rule->{isa}) {
@@ -61,8 +66,8 @@ sub BUILDARGS {
             $rule->{type} = _does_tc(delete $rule->{does});
         }
 
-        if(defined $rule->{type}) {
-            $rule->{should_coercion} = $rule->{type}->has_coercion;
+        if(defined $rule->{type} && not defined $rule->{coerce}) {
+            $rule->{coerce} = $rule->{type}->has_coercion;
         }
 
         $rule->{name} = $name;
@@ -114,13 +119,12 @@ sub validate {
     my $self = shift;
     my $args = $self->initialize(@_);
 
-    my $rules = $self->rules;
     my %skip;
-
     my @errors;
     my @missing;
     my $nargs = scalar keys %{$args};
     my $used  = 0;
+    my $rules = $self->rules;
     RULE: foreach my $rule(@{ $rules }) {
         my $name = $rule->{name};
         next RULE if exists $skip{$name};
@@ -161,7 +165,7 @@ sub validate {
         elsif(exists $rule->{default}) {
             my $default = $rule->{default};
             $args->{$name} = Mouse::Util::TypeConstraints::CodeRef($default)
-                ? $default->()
+                ? $default->($self, $rule, $args)
                 : $default;
         }
         elsif(!$rule->{optional}) {
@@ -209,6 +213,7 @@ sub validate {
         }
     }
 
+    # make it ristricted
     &Internals::SvREADONLY($args, 1);
 
     if(@errors) {
@@ -255,10 +260,10 @@ sub apply_type_constraint {
     my $tc = $rule->{type};
     return '' if $tc->check(${$value_ref});
 
-    if($rule->{should_coercion}) {
+    if($rule->{coerce}) {
         my $value = $tc->coerce(${$value_ref});
         if($tc->check($value)) {
-            ${$value_ref} = $value;
+            ${$value_ref} = $value; # commit
             return '';
         }
     }
@@ -276,7 +281,7 @@ Data::Validator - Rule based validator on type constraint system
 
 =head1 VERSION
 
-This document describes Data::Validator version 0.04.
+This document describes Data::Validator version 0.05.
 
 =head1 SYNOPSIS
 
@@ -392,13 +397,57 @@ Attributes for I<$rule> are as follows:
 
 =item C<< isa => $type : Str|Object >>
 
+The type of the rule, which can be a Mouse type constraint name, a class name,
+or a type constraint object of either Mouse or Moose (i.e. it's duck-typed).
+
 =item C<< does => $role : Str|Object >>
+
+The type of the rule, which can be a Mouse type constraint name, a role name,
+or a type constraint object of either Mouse or Moose (i.e. it's duck-typed).
+
+Note that you cannot use it with the C<isa> attribute.
+
+=item C<< coerce => $should_coercion : Bool >>
+
+If false, the rule does not try to coerce when the validation fails.
+Default to true.
+
+=item C<< default=> $value : Any | CodeRef >>
+
+The default value for the argument.
+If it is a CODE reference, it is called in scalar context as
+C<< $default->($validator, $rule, $args) >> and its return value
+is used as a default value.
+
+Because arguments are validated in the order of definitions, C<default>
+callbacks can rely on the previously-filled values:
+
+    my $v = Data::Validator->new(
+        foo => { default => 99 },
+        bar => { default => sub {
+            my($validator, $this_rule, $args) = @_;
+            return $args->{foo} + 1;
+        } },
+    );
+    $v->validate();          # bar is 100
+    $v->validate(foo => 42); # bar is 43
+
+Unlike Moose/Mouse's C<default>, any references are allowed, but note that
+they are statically allocated.
 
 =item C<< optional => $value : Bool >>
 
+If true, users can omit the argument. Default to false.
+
 =item C<< xor => $exclusives : ArrayRef >>
 
+Exclusive arguments, which users cannot pass together.
+
 =item C<< documentation => $doc : Str >>
+
+Descriptions of the argument.
+
+This is not yet used anywhere.
 
 =back
 
