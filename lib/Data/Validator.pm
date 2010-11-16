@@ -5,7 +5,7 @@ use Mouse::Util::TypeConstraints ();
 use Mouse::Util                  ();
 use Carp                         ();
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 *_isa_tc  = \&Mouse::Util::TypeConstraints::find_or_create_isa_type_constraint;
 *_does_tc = \&Mouse::Util::TypeConstraints::find_or_create_does_type_constraint;
@@ -96,14 +96,13 @@ sub BUILDARGS {
 sub with {
     my($self, @roles) = @_;
     foreach my $role(@roles) {
+        next if ref $role;
         $role = Mouse::Util::load_first_existing_class(
             __PACKAGE__ . '::Role::' . $role,
             $role,
         );
     }
-    @roles = sort { $b->parse_whole_args <=> $a->parse_whole_args } @roles;
-    Mouse::Util::apply_all_roles($self,
-        map { $_ => { -excludes => 'parse_whole_args' } } @roles);
+    Mouse::Util::apply_all_roles($self, @roles);
     return $self;
 }
 
@@ -132,7 +131,7 @@ sub validate {
         if(exists $args->{$name}) {
 
             if(exists $rule->{type}) {
-                my $err = $self->apply_type_constraint($rule, \$args->{$name});
+                my $err = $self->apply_type_constraint($rule, $args, $name);
                 if($err) {
                     push @errors, $self->make_error(
                         type    => 'InvalidValue',
@@ -147,15 +146,13 @@ sub validate {
                 # checks conflicts with exclusive arguments
                 foreach my $other_name( @{ $rule->{xor} } ) {
                     if(exists $args->{$other_name}) {
-                        my $exclusive = Mouse::Util::quoted_english_list(
-                            grep { exists $args->{$_} } @{$rule->{xor}} );
                         push @errors, $self->make_error(
                             type    => 'ExclusiveParameter',
                             message => "Exclusive parameters passed together:"
-                                     . " '$name' v.s. $exclusive",
+                                     . " '$name' v.s. '$other_name'",
                             name    => $name,
+                            conflict=> $other_name,
                         );
-                        next RULE;
                     }
                     $skip{$other_name}++;
                 }
@@ -178,7 +175,6 @@ sub validate {
         MISSING: foreach my $rule(@missing) {
             my $name = $rule->{name};
             next if exists $skip{$name};
-            next if exists $args->{$name};
 
             my @xors;
             if($rule->{xor}) {
@@ -256,20 +252,20 @@ sub throw_error {
 }
 
 sub apply_type_constraint {
-    my($self, $rule, $value_ref) = @_;
+    my($self, $rule, $args, $name) = @_;
     my $tc = $rule->{type};
-    return '' if $tc->check(${$value_ref});
+    return '' if $tc->check($args->{$name});
 
     if($rule->{coerce}) {
-        my $value = $tc->coerce(${$value_ref});
+        my $value = $tc->coerce($args->{$name});
         if($tc->check($value)) {
-            ${$value_ref} = $value; # commit
+            $args->{$name} = $value; # commit
             return '';
         }
     }
 
-    return "Invalid for '$rule->{name}': "
-        . $tc->get_message(${$value_ref});
+    return "Invalid value for '$rule->{name}': "
+        . $tc->get_message($args->{$name});
 }
 
 __PACKAGE__->meta->make_immutable;
@@ -281,7 +277,7 @@ Data::Validator - Rule based validator on type constraint system
 
 =head1 VERSION
 
-This document describes Data::Validator version 0.05.
+This document describes Data::Validator version 0.06.
 
 =head1 SYNOPSIS
 
@@ -364,9 +360,9 @@ with full of C<Smart::Args> functionality.
 
 Moose's type constraint system is awesome, and so is Mouse's. In fact,
 Mouse's type constraints are much faster than Moose's so that you need not
-hesitate to use type validations.
+hesitate to check types.
 
-Thus, I have made C<Data::Validator> based on Mouse's type constraint system.
+Thus, I have made C<Data::Validator> on Mouse's type constraint system.
 
 =item Pure Perl
 
@@ -379,7 +375,7 @@ modules which work in pure Perl.
 =item Performance
 
 Validators should be as fast as possible because they matter only for illegal
-inputs.
+inputs. Otherwise, one would want something like I<no validation> option.
 
 This is much faster than C<Params::Validate>, which has an XS backend, though.
 
@@ -487,14 +483,14 @@ arguments by the order of argument rules, instead of by-name.
 Note that if the last argument is a HASH reference, it is regarded as
 named-style arguments.
 
-=head3 AllowExtra
+=head2 AllowExtra
 
 Regards unknown arguments as extra arguments, and returns them as
 a list of name-value pairs:
 
     my($args, %extra) = $rule->validate(@_);
 
-=head3 NoThrow
+=head2 NoThrow
 
 Does not throw errors. Instead, it provides validators with the C<errors>
 attribute:
@@ -508,10 +504,10 @@ attribute:
         }
     }
 
-=head3 Croak
+=head2 Croak
 
 Does not report stack backtraces on errors, i.e. uses C<croak()> instead
-of C<confess()>.
+of C<confess()> to throw errors.
 
 =head1 DEPENDENCIES
 
