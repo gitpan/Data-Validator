@@ -5,7 +5,7 @@ use Mouse::Util::TypeConstraints ();
 use Mouse::Util                  ();
 use Carp                         ();
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 *_isa_tc  = \&Mouse::Util::TypeConstraints::find_or_create_isa_type_constraint;
 *_does_tc = \&Mouse::Util::TypeConstraints::find_or_create_does_type_constraint;
@@ -277,7 +277,7 @@ Data::Validator - Rule based validator on type constraint system
 
 =head1 VERSION
 
-This document describes Data::Validator version 0.06.
+This document describes Data::Validator version 0.07.
 
 =head1 SYNOPSIS
 
@@ -342,7 +342,7 @@ This document describes Data::Validator version 0.06.
 This is yet another validation library, based on C<Smart::Args> but
 less smart.
 
-This is under development. B<< Any API will change without notice >>.
+This is designed for general data validation. For example, it is useful for CSV, JSON, XML, and so on.
 
 =head2 Concepts
 
@@ -524,6 +524,8 @@ to cpan-RT.
 L<Smart::Args>
 
 L<Params::Validate>
+
+L<Sub::Args>
 
 L<MooseX::Params::Validate>
 
