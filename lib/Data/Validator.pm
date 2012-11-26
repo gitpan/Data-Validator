@@ -5,7 +5,7 @@ use Mouse::Util::TypeConstraints ();
 use Mouse::Util                  ();
 use Carp                         ();
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 
 *_isa_tc  = \&Mouse::Util::TypeConstraints::find_or_create_isa_type_constraint;
 *_does_tc = \&Mouse::Util::TypeConstraints::find_or_create_does_type_constraint;
@@ -277,7 +277,7 @@ Data::Validator - Rule based validator on type constraint system
 
 =head1 VERSION
 
-This document describes Data::Validator version 1.00.
+This document describes Data::Validator version 1.01.
 
 =head1 SYNOPSIS
 
@@ -323,7 +323,7 @@ This document describes Data::Validator version 1.00.
         # ...
     }
     seq( 'bar' );          # seq() will get { foo => 'bar' }
-    seq({ foo => 'bar' }); # named style are available!
+    seq({ foo => 'bar' }); # named style are NOT available!
 
 
     # using Method and StrictSequenced together
@@ -479,6 +479,10 @@ and returns it as the first value:
 
 Deals with arguments in sequenced style, where users should pass
 arguments by the order of argument rules, instead of by-name.
+
+=head3 INCOMPATIBLE CHANGE
+
+Deals with arguments in named style are NOT available in StrictSequenced since version [NEXT].
 
 =head2 Sequenced
 
