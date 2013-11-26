@@ -11,7 +11,7 @@ configure_requires:
   CPAN::Meta::Prereqs: 0
   Module::Build: 0.38
 dynamic_config: 0
-generated_by: 'Minilla/v0.4.5, CPAN::Meta::Converter version 2.131490'
+generated_by: 'Minilla/v0.10.0, CPAN::Meta::Converter version 2.132830'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -26,10 +26,11 @@ no_index:
     - eg
     - examples
     - author
+    - builder
 provides:
   Data::Validator:
     file: lib/Data/Validator.pm
-    version: 1.03
+    version: 1.04
   Data::Validator::Role::AllowExtra:
     file: lib/Data/Validator/Role/AllowExtra.pm
   Data::Validator::Role::Croak:
@@ -51,7 +52,7 @@ resources:
   bugtracker: https://github.com/gfx/p5-Data-Validator/issues
   homepage: https://github.com/gfx/p5-Data-Validator
   repository: git://github.com/gfx/p5-Data-Validator.git
-version: 1.03
+version: 1.04
 x_contributors:
   - 'karupanerura <karupa@cpan.org>'
   - 'Fuji, Goro <fuji.goro@dena.jp>'
