@@ -4,7 +4,7 @@
       "Fuji, Goro (gfx) <gfuji@cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v0.10.0",
+   "generated_by" : "Minilla/v1.1.0",
    "license" : [
       "perl_5"
    ],
@@ -41,7 +41,8 @@
       "develop" : {
          "requires" : {
             "Test::CPAN::Meta" : "0",
-            "Test::MinimumVersion" : "0.10108",
+            "Test::MinimumVersion::Fast" : "0.04",
+            "Test::PAUSE::Permissions" : "0.04",
             "Test::Pod" : "1.41",
             "Test::Spellunker" : "v0.2.7"
          }
@@ -62,7 +63,7 @@
    "provides" : {
       "Data::Validator" : {
          "file" : "lib/Data/Validator.pm",
-         "version" : "1.04"
+         "version" : "1.06"
       },
       "Data::Validator::Role::AllowExtra" : {
          "file" : "lib/Data/Validator/Role/AllowExtra.pm"
@@ -82,6 +83,9 @@
       "Data::Validator::Role::Sequenced" : {
          "file" : "lib/Data/Validator/Role/Sequenced.pm"
       },
+      "Data::Validator::Role::SmartSequenced" : {
+         "file" : "lib/Data/Validator/Role/SmartSequenced.pm"
+      },
       "Data::Validator::Role::StrictSequenced" : {
          "file" : "lib/Data/Validator/Role/StrictSequenced.pm"
       }
@@ -97,10 +101,11 @@
          "web" : "https://github.com/gfx/p5-Data-Validator"
       }
    },
-   "version" : "1.04",
+   "version" : "1.06",
    "x_contributors" : [
       "karupanerura <karupa@cpan.org>",
       "Fuji, Goro <fuji.goro@dena.jp>",
-      "Fuji, Goro <g.psy.va@gmail.com>"
+      "Fuji, Goro <g.psy.va@gmail.com>",
+      "robario <webmaster@robario.com>"
    ]
 }

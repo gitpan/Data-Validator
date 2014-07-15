@@ -7,6 +7,7 @@ author/requires.cpanm
 benchmark/method.pl
 benchmark/sequenced.pl
 benchmark/simple.pl
+benchmark/smart-sequenced.pl
 benchmark/vs-moosex-params-validate.pl
 benchmark/with-type.pl
 cpanfile
@@ -20,6 +21,7 @@ lib/Data/Validator/Role/Method.pm
 lib/Data/Validator/Role/NoRestricted.pm
 lib/Data/Validator/Role/NoThrow.pm
 lib/Data/Validator/Role/Sequenced.pm
+lib/Data/Validator/Role/SmartSequenced.pm
 lib/Data/Validator/Role/StrictSequenced.pm
 t/000_load.t
 t/001_basic.t
@@ -41,6 +43,7 @@ t/105_croak.t
 t/106_nothrow.t
 t/107_strict_sequenced.t
 t/108_no_restricted.t
+t/109_smart_sequenced.t
 xt/perlcritic.t
 xt/pod.t
 xt/podsynopsis.t
